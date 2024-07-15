@@ -1,10 +1,10 @@
 #
 # LinuxGSM gamename Dockerfile
 #
-# https://github.com/GameServerManagers/docker-gameserver
+# https://github.com/Demonslyr/docker-gameserver
 #
 
-FROM gameservermanagers/linuxgsm:os
+FROM docker.atriarch.systems/linuxgsm:os
 LABEL maintainer="Atriarch Systems <postmaster@mail.atriarch.systems>"
 ARG SHORTNAME=shortname
 ENV GAMESERVER=shortnameserver
@@ -12,7 +12,7 @@ ENV GAMESERVER=shortnameserver
 WORKDIR /app
 
 ## Auto install game server requirements
-RUN depshortname=$(curl --connect-timeout 10 -s https://raw.githubusercontent.com/GameServerManagers/LinuxGSM/master/lgsm/data/os.csv |awk -v shortname="shortname" -F, '$1==shortname {$1=""; print $0}') \
+RUN depshortname=$(curl --connect-timeout 10 -s https://raw.githubusercontent.com/Demonslyr/LinuxGSM/master/lgsm/data/os.csv |awk -v shortname="shortname" -F, '$1==shortname {$1=""; print $0}') \
   && if [ -n "${depshortname}" ]; then \
   echo "**** Install ${depshortname} ****" \
   && apt-get update \

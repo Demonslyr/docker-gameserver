@@ -1,7 +1,7 @@
 #
 # LinuxGSM The Specialists Dockerfile
 #
-# https://github.com/GameServerManagers/docker-gameserver
+# https://github.com/Demonslyr/docker-gameserver
 #
 
 FROM docker.atriarch.systems/linuxgsm:ubuntu-2204
