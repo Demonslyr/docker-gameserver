@@ -4,7 +4,7 @@
 # https://github.com/Demonslyr/docker-gameserver
 #
 
-FROM docker.atriarch.systems/linuxgsm:ubuntu-20.04
+FROM docker.atriarch.systems/linuxgsm:ubuntu-2004
 LABEL maintainer="Atriarch Systems <postmaster@mail.atriarch.systems>"
 ARG SHORTNAME=sven
 ENV GAMESERVER=svenserver
