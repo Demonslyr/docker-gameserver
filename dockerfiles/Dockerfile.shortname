@@ -5,7 +5,7 @@
 #
 
 FROM gameservermanagers/linuxgsm:os
-LABEL maintainer="LinuxGSM <me@danielgibbs.co.uk>"
+LABEL maintainer="Atriarch Systems <postmaster@mail.atriarch.systems>"
 ARG SHORTNAME=shortname
 ENV GAMESERVER=shortnameserver
 

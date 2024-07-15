@@ -5,7 +5,7 @@
 #
 
 FROM gameservermanagers/linuxgsm:ubuntu-20.04
-LABEL maintainer="LinuxGSM <me@danielgibbs.co.uk>"
+LABEL maintainer="Atriarch Systems <postmaster@mail.atriarch.systems>"
 ARG SHORTNAME=sven
 ENV GAMESERVER=svenserver
 
