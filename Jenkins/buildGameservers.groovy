@@ -19,7 +19,7 @@ node {
         dockerfiles = sh(returnStdout: true, script: "ls ${pathToDockerfileDirectory}").trim().split('\n')
 
         for (dockerfile in dockerfiles) {
-            appName = dockerfile.replace('dockerfile.', '')
+            appName = dockerfile.replace('Dockerfile.', '') // strip off the dockerfile prefix
             fullImageName = "${dockerRepo}/${imageNamePrefix}${appName}:v1.0.${BUILD_NUMBER}"
 
             withCredentials([usernamePassword(usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS', credentialsId: dockerCredId)]) {
