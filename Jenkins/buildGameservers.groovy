@@ -18,13 +18,14 @@ node {
     stage('build and push') {
         dockerfiles = sh(returnStdout: true, script: "ls ${pathToDockerfileDirectory}").trim().split('\n')
 
-        for (dockerfile in dockerfiles) {
-            appName = dockerfile.replace('Dockerfile.', '') // strip off the dockerfile prefix
-            fullImageName = "${dockerRepo}/${imageNamePrefix}${appName}:v1.0.${BUILD_NUMBER}"
+        withCredentials([usernamePassword(usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS', credentialsId: dockerCredId)]) {
+            loginout = sh(returnStdout: true, script: "echo ${DOCKER_PASS} | docker login ${dockerRepo} --username ${DOCKER_USER} --password-stdin")
+            println loginout
 
-            withCredentials([usernamePassword(usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS', credentialsId: dockerCredId)]) {
-                loginout = sh(returnStdout: true, script: "echo ${DOCKER_PASS} | docker login ${dockerRepo} --username ${DOCKER_USER} --password-stdin")
-                println loginout
+            for (dockerfile in dockerfiles) {
+                appName = dockerfile.replace('Dockerfile.', '') // strip off the dockerfile prefix
+                fullImageName = "${dockerRepo}/${imageNamePrefix}${appName}:v1.0.${BUILD_NUMBER}"
+
 
                 buildout = sh(returnStdout: true, script: "docker build -t ${appName} -f dockerfiles/${dockerfile} .")
                 println buildout
