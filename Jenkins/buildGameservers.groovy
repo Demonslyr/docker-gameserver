@@ -42,33 +42,39 @@ node {
         dir('GitOps') { // Clone the repo in a new workspace to avoid conflicts
             git url: "https://github.com/${gitOpsRepo}", branch: gitOpsBranch, credentialsId: jenkinsGitCredentials
 
-            dockerfiles = sh(returnStdout: true, script: 'ls ../dockerfiles').trim().split('\n')
-
-            for (dockerfile in dockerfiles) {
-                appName = dockerfile.replace('dockerfile.', '')
-                fullImageName = "${dockerRepo}/${appName}:v1.0.${BUILD_NUMBER}"
-
-                sh """
-                find /AtriarchGameHosting/Servers -type f -name '*.yaml' | while read file; do
-                    python3 -c "
+            sh """
+            find /AtriarchGameHosting/Servers -type f -name '*.yaml' | while read file; do
+                python3 -c "
 import yaml
-with open('\$file', 'r') as f:
-    docs = yaml.safe_load_all(f)
-    updated_docs = []
-    for doc in docs:
-        if doc['kind'] == 'Deployment' and doc['metadata']['name'] == '${appName}':
-            for container in doc['spec']['template']['spec']['containers']:
-                if 'image' in container:
-                    container['image'] = '${fullImageName}'
-        updated_docs.append(doc)
-with open('\$file', 'w') as f:
-    yaml.safe_dump_all(updated_docs, f, explicit_start=True)
-"
-                done
-                """
+import re
 
-                sh 'git add /AtriarchGameHosting/Servers/*.yaml'
-            }
+def update_image_version(file_path, repo, prefix, new_version):
+    with open(file_path, 'r') as f:
+        docs = yaml.safe_load_all(f)
+        updated_docs = []
+        image_pattern = re.compile(f'{repo}/{prefix}([^:]*):v\\d+\\.\\d+\\.\\d+')
+        for doc in docs:
+            if 'kind' in doc and doc['kind'] == 'Deployment':
+                containers = doc.get('spec', {}).get('template', {}).get('spec', {}).get('containers', [])
+                for container in containers:
+                    if 'image' in container:
+                        image = container['image']
+                        if image_pattern.match(image):
+                            new_image = image_pattern.sub(f'{repo}/{prefix}\\1:{new_version}', image)
+                            container['image'] = new_image
+            updated_docs.append(doc)
+    with open(file_path, 'w') as f:
+        yaml.safe_dump_all(updated_docs, f, explicit_start=True)
+
+new_version = 'v1.0.${BUILD_NUMBER}'
+repo = '${dockerRepo}'
+prefix = '${imageNamePrefix}'
+update_image_version('\$file', repo, prefix, new_version)
+"
+            done
+            """
+
+            sh 'git add /AtriarchGameHosting/Servers/*.yaml'
             sh "git commit -m \"Update server versions to ${BUILD_NUMBER}\""
 
             withCredentials([usernamePassword(usernameVariable: 'GIT_CRED_USER', passwordVariable: 'GIT_CRED_PASS', credentialsId: jenkinsGitCredentials)]) {
