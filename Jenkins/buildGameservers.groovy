@@ -8,7 +8,7 @@ node {
         currentBuild.description = "${Branch}"
         dockerRepo = "${DockerRepo}"
         dockerCredId = "${DockerCredentials}"
-        imageNamePrefix= "${ImageNamePrefix}"
+        imageNamePrefix = "${ImageNamePrefix}"
         gitOpsRepo = "${GitOpsRepo}"
         gitOpsBranch = "${GitOpsBranch}"
         pathToDeploymentYaml = "${PathToDeploymentYaml}"
@@ -16,23 +16,23 @@ node {
     }
 
     stage('build and push') {
-        def dockerfiles = sh(returnStdout: true, script: "ls ${pathToDockerfileDirectory}").trim().split('\n')
+        dockerfiles = sh(returnStdout: true, script: "ls ${pathToDockerfileDirectory}").trim().split('\n')
 
         for (dockerfile in dockerfiles) {
-            def appName = dockerfile.replace('dockerfile.', '')
-            def fullImageName = "${dockerRepo}/${imageNamePrefix}${appName}:v1.0.${BUILD_NUMBER}"
+            appName = dockerfile.replace('dockerfile.', '')
+            fullImageName = "${dockerRepo}/${imageNamePrefix}${appName}:v1.0.${BUILD_NUMBER}"
 
             withCredentials([usernamePassword(usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS', credentialsId: dockerCredId)]) {
-                def loginout = sh(returnStdout: true, script: "echo ${DOCKER_PASS} | docker login ${dockerRepo} --username ${DOCKER_USER} --password-stdin")
+                loginout = sh(returnStdout: true, script: "echo ${DOCKER_PASS} | docker login ${dockerRepo} --username ${DOCKER_USER} --password-stdin")
                 println loginout
 
-                def buildout = sh(returnStdout: true, script: "docker build -t ${appName} -f dockerfiles/${dockerfile} .")
+                buildout = sh(returnStdout: true, script: "docker build -t ${appName} -f dockerfiles/${dockerfile} .")
                 println buildout
 
-                def tagout = sh(returnStdout: true, script: "docker tag ${appName} ${fullImageName}")
+                tagout = sh(returnStdout: true, script: "docker tag ${appName} ${fullImageName}")
                 println tagout
 
-                def pushout = sh(returnStdout: true, script: "docker push ${fullImageName}")
+                pushout = sh(returnStdout: true, script: "docker push ${fullImageName}")
                 println pushout
             }
         }
@@ -42,11 +42,11 @@ node {
         dir('GitOps') { // Clone the repo in a new workspace to avoid conflicts
             git url: "https://github.com/${gitOpsRepo}", branch: gitOpsBranch, credentialsId: jenkinsGitCredentials
 
-            def dockerfiles = sh(returnStdout: true, script: 'ls ../dockerfiles').trim().split('\n')
+            dockerfiles = sh(returnStdout: true, script: 'ls ../dockerfiles').trim().split('\n')
 
             for (dockerfile in dockerfiles) {
-                def appName = dockerfile.replace('dockerfile.', '')
-                def fullImageName = "${dockerRepo}/${appName}:v1.0.${BUILD_NUMBER}"
+                appName = dockerfile.replace('dockerfile.', '')
+                fullImageName = "${dockerRepo}/${appName}:v1.0.${BUILD_NUMBER}"
 
                 sh """
                 find /AtriarchGameHosting/Servers -type f -name '*.yaml' | while read file; do
