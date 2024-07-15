@@ -75,7 +75,7 @@ update_image_version('\$file', repo, prefix, new_version)
             done
             """
 
-            sh 'git add /atriarch-game-hosting/servers/*.yaml'
+            sh 'git add ./atriarch-game-hosting/servers/*.yaml'
             sh "git commit -m \"Update server versions to ${BUILD_NUMBER}\""
 
             withCredentials([usernamePassword(usernameVariable: 'GIT_CRED_USER', passwordVariable: 'GIT_CRED_PASS', credentialsId: jenkinsGitCredentials)]) {
