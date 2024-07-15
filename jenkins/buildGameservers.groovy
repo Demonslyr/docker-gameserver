@@ -8,18 +8,19 @@ node {
         currentBuild.description = "${Branch}"
         dockerRepo = "${DockerRepo}"
         dockerCredId = "${DockerCredentials}"
+        imageNamePrefix= "${ImageNamePrefix}"
         gitOpsRepo = "${GitOpsRepo}"
         gitOpsBranch = "${GitOpsBranch}"
         pathToDeploymentYaml = "${PathToDeploymentYaml}"
+        pathToDockerfileDirectory = "${pathToDockerfileDirectory}"
     }
 
     stage('build and push') {
-        def dockerfiles = sh(returnStdout: true, script: 'ls dockerfiles').trim().split('\n')
+        def dockerfiles = sh(returnStdout: true, script: "ls ${pathToDockerfileDirectory}").trim().split('\n')
 
         for (dockerfile in dockerfiles) {
-            def gameServerAbbreviation = dockerfile.replace('dockerfile.', '')
-            def appName = gameServerAbbreviation
-            def fullImageName = "${dockerRepo}/${appName}:v1.0.${BUILD_NUMBER}"
+            def appName = dockerfile.replace('dockerfile.', '')
+            def fullImageName = "${dockerRepo}/${imageNamePrefix}${appName}:v1.0.${BUILD_NUMBER}"
 
             withCredentials([usernamePassword(usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS', credentialsId: dockerCredId)]) {
                 def loginout = sh(returnStdout: true, script: "echo ${DOCKER_PASS} | docker login ${dockerRepo} --username ${DOCKER_USER} --password-stdin")
@@ -44,8 +45,7 @@ node {
             def dockerfiles = sh(returnStdout: true, script: 'ls ../dockerfiles').trim().split('\n')
 
             for (dockerfile in dockerfiles) {
-                def gameServerAbbreviation = dockerfile.replace('dockerfile.', '')
-                def appName = gameServerAbbreviation
+                def appName = dockerfile.replace('dockerfile.', '')
                 def fullImageName = "${dockerRepo}/${appName}:v1.0.${BUILD_NUMBER}"
 
                 sh """
