@@ -44,7 +44,7 @@ node {
             git url: "https://github.com/${gitOpsRepo}", branch: gitOpsBranch, credentialsId: jenkinsGitCredentials
 
             sh """
-            find /AtriarchGameHosting/Servers -type f -name '*.yaml' | while read file; do
+            find ./atriarch-game-hosting/servers -type f -name '*.yaml' | while read file; do
                 python3 -c "
 import yaml
 import re
