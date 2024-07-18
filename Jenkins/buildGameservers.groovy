@@ -44,7 +44,7 @@ node {
             git url: "https://github.com/${gitOpsRepo}", branch: gitOpsBranch, credentialsId: jenkinsGitCredentials
 
             sh """
-            find ./atriarch-game-hosting/servers -type f -name '*.yaml' | while read file; do
+            find ./atriarch-game-hosting/servers -type f -name '*.yml' | while read file; do
                 python3 -c "
 import yaml
 import re
@@ -75,7 +75,7 @@ update_image_version('\$file', repo, prefix, new_version)
             done
             """
 
-            sh 'git add ./atriarch-game-hosting/servers/*.yaml'
+            sh 'git add ./atriarch-game-hosting/servers/*.yml'
             sh "git commit -m \"Update server versions to ${BUILD_NUMBER}\""
 
             withCredentials([usernamePassword(usernameVariable: 'GIT_CRED_USER', passwordVariable: 'GIT_CRED_PASS', credentialsId: jenkinsGitCredentials)]) {
