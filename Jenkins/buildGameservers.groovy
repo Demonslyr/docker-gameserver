@@ -61,7 +61,7 @@ def update_image_version(file_path, repo, prefix, new_version):
                     if 'image' in container:
                         image = container['image']
                         if image_pattern.match(image):
-                            new_image = image_pattern.sub(f'{repo}/{prefix}\\1:{new_version}', image)
+                            new_image = image_pattern.sub(fr'{repo}/{prefix}\\1:{new_version}', image)
                             container['image'] = new_image
             updated_docs.append(doc)
     with open(file_path, 'w') as f:
