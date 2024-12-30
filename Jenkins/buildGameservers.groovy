@@ -32,27 +32,29 @@ node {
       }
     }
 // Can these two steps be combined?
-    stage('build and push final images with API') {
-        dir('Atriarch.GameHosting.Edge') {
-            git url: apiRepoUrl, branch: 'main', credentialsId: jenkinsGitCredentials
+stage('build and push final images with API') {
+    dir('Atriarch.GameHosting.Edge') {
+        git url: apiRepoUrl, branch: 'main', credentialsId: jenkinsGitCredentials
 
-            withCredentials([usernamePassword(usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS', credentialsId: dockerCredId)]) {
-                sh "echo ${DOCKER_PASS} | docker login ${dockerRepo} --username ${DOCKER_USER} --password-stdin"
+        withCredentials([usernamePassword(usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS', credentialsId: dockerCredId)]) {
+            sh "echo ${DOCKER_PASS} | docker login ${dockerRepo} --username ${DOCKER_USER} --password-stdin"
 
-                for (dockerfile in dockerfiles) {
-                    appName = dockerfile.replace('Dockerfile.', '') // strip off the dockerfile prefix
-                    localGameImageTag = "${dockerRepo}/${imageNamePrefix}${appName}:game-intermediate"
-                    finalImageName = "${dockerRepo}/${imageNamePrefix}${appName}:v1.0.${BUILD_NUMBER}"
+            for (dockerfile in dockerfiles) {
+                appName = dockerfile.replace('Dockerfile.', '') // strip off the dockerfile prefix
+                localGameImageTag = "${dockerRepo}/${imageNamePrefix}${appName}:game-intermediate"
+                finalImageName = "${dockerRepo}/${imageNamePrefix}${appName}:v1.0.${BUILD_NUMBER}"
 
-                    // Build the final image with the API
-                    sh """
-                    docker build --build-arg BASE_IMAGE=${localGameImageTag} -t ${finalImageName} .
-                    docker push ${finalImageName}
-                    """
-                }
+                // Build the final image with the API, specifying the correct path to the Dockerfile
+                sh """
+                docker build --build-arg BASE_IMAGE=${localGameImageTag} \
+                             -t ${finalImageName} \
+                             -f Atriarch.GameHosting.Edge/Dockerfile Atriarch.GameHosting.Edge
+                docker push ${finalImageName}
+                """
             }
         }
     }
+}
 
     stage('updateGitOpsRepo') {
         dir('GitOps') { // Clone the repo in a new workspace to avoid conflicts
