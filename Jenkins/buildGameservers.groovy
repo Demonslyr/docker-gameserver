@@ -1,9 +1,9 @@
 properties([pipelineTriggers([githubPush()])])
 node {
     jenkinsGitCredentials = 'jenkinsGitHubSvc'
-    git url: 'https://github.com/Demonslyr/docker-gameserver.git', branch: 'atriarch', credentialsId: jenkinsGitCredentials
 
     stage('setup') {
+        git url: 'https://github.com/Demonslyr/docker-gameserver.git', branch: 'atriarch', credentialsId: jenkinsGitCredentials
         checkout scm
         currentBuild.description = "${Branch}"
         dockerRepo = "${DockerRepo}"
@@ -13,28 +13,43 @@ node {
         gitOpsBranch = "${GitOpsBranch}"
         pathToDeploymentYaml = "${PathToDeploymentYaml}"
         pathToDockerfileDirectory = "${pathToDockerfileDirectory}"
+        apiRepoUrl = "${EdgeApiRepoUrl}"
     }
 
-    stage('build and push') {
-        dockerfiles = sh(returnStdout: true, script: "ls ${pathToDockerfileDirectory}").trim().split('\n')
+    stage('build game images') {
+      dockerfiles = sh(returnStdout: true, script: "ls ${pathToDockerfileDirectory}").trim().split('\n')
+          withCredentials([usernamePassword(usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS', credentialsId: dockerCredId)]) {
+                sh "echo ${DOCKER_PASS} | docker login ${dockerRepo} --username ${DOCKER_USER} --password-stdin"
+        for (dockerfile in dockerfiles) {
+            appName = dockerfile.replace('Dockerfile.', '') // strip off the dockerfile prefix
+            localGameImageTag = "${imageNamePrefix}${appName}:game-intermediate"
 
-        withCredentials([usernamePassword(usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS', credentialsId: dockerCredId)]) {
-            loginout = sh(returnStdout: true, script: "echo ${DOCKER_PASS} | docker login ${dockerRepo} --username ${DOCKER_USER} --password-stdin")
-            println loginout
+            // Build the game image locally
+            sh """
+            docker build -t ${localGameImageTag} -f ${pathToDockerfileDirectory}/${dockerfile} .
+            """
+        }
+      }
+    }
+// Can these two steps be combined?
+    stage('build and push final images with API') {
+        dir('Atriarch.GameHosting.Edge') {
+            git url: apiRepoUrl, branch: 'main', credentialsId: jenkinsGitCredentials
 
-            for (dockerfile in dockerfiles) {
-                appName = dockerfile.replace('Dockerfile.', '') // strip off the dockerfile prefix
-                fullImageName = "${dockerRepo}/${imageNamePrefix}${appName}:v1.0.${BUILD_NUMBER}"
+            withCredentials([usernamePassword(usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS', credentialsId: dockerCredId)]) {
+                sh "echo ${DOCKER_PASS} | docker login ${dockerRepo} --username ${DOCKER_USER} --password-stdin"
 
+                for (dockerfile in dockerfiles) {
+                    appName = dockerfile.replace('Dockerfile.', '') // strip off the dockerfile prefix
+                    localGameImageTag = "${imageNamePrefix}${appName}:game-intermediate"
+                    finalImageName = "${dockerRepo}/${imageNamePrefix}${appName}:v1.0.${BUILD_NUMBER}"
 
-                buildout = sh(returnStdout: true, script: "docker build -t ${appName} -f dockerfiles/${dockerfile} .")
-                println buildout
-
-                tagout = sh(returnStdout: true, script: "docker tag ${appName} ${fullImageName}")
-                println tagout
-
-                pushout = sh(returnStdout: true, script: "docker push ${fullImageName}")
-                println pushout
+                    // Build the final image with the API
+                    sh """
+                    docker build --build-arg BASE_IMAGE=${localGameImageTag} -t ${finalImageName} .
+                    docker push ${finalImageName}
+                    """
+                }
             }
         }
     }
