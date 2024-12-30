@@ -22,7 +22,7 @@ node {
                 sh "echo ${DOCKER_PASS} | docker login ${dockerRepo} --username ${DOCKER_USER} --password-stdin"
         for (dockerfile in dockerfiles) {
             appName = dockerfile.replace('Dockerfile.', '') // strip off the dockerfile prefix
-            localGameImageTag = "${imageNamePrefix}${appName}:game-intermediate"
+            localGameImageTag = "${dockerRepo}/${imageNamePrefix}${appName}:game-intermediate"
 
             // Build the game image locally
             sh """
@@ -41,7 +41,7 @@ node {
 
                 for (dockerfile in dockerfiles) {
                     appName = dockerfile.replace('Dockerfile.', '') // strip off the dockerfile prefix
-                    localGameImageTag = "${imageNamePrefix}${appName}:game-intermediate"
+                    localGameImageTag = "${dockerRepo}/${imageNamePrefix}${appName}:game-intermediate"
                     finalImageName = "${dockerRepo}/${imageNamePrefix}${appName}:v1.0.${BUILD_NUMBER}"
 
                     // Build the final image with the API
