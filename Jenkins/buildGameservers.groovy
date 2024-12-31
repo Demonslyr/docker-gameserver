@@ -49,7 +49,7 @@ stage('build and push final images with API') {
                 sh """
                 docker build --build-arg BASE_IMAGE=${localGameImageTag} \
                              -t ${finalImageName} \
-                             -f Atriarch.GameHosting.Edge/Dockerfile Atriarch.GameHosting.Edge
+                             -f Atriarch.GameHosting.Edge/Dockerfile .
                 docker push ${finalImageName}
                 """
             }
