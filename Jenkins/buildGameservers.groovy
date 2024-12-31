@@ -39,6 +39,7 @@ stage('build and push final images with API') {
         withCredentials([usernamePassword(usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS', credentialsId: dockerCredId)]) {
             sh "echo ${DOCKER_PASS} | docker login ${dockerRepo} --username ${DOCKER_USER} --password-stdin"
 
+            sh ls
             for (dockerfile in dockerfiles) {
                 appName = dockerfile.replace('Dockerfile.', '') // strip off the dockerfile prefix
                 localGameImageTag = "${dockerRepo}/${imageNamePrefix}${appName}:game-intermediate"
